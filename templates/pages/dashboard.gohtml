@@ -1,8 +1,7 @@
 {{define "content"}}
 <div class="container">
-    <h1 class="title">Terraform Workspaces Dashboard</h1>
     <div class="columns is-multiline">
-        {{range .Workspaces}}
+        {{range .Data.Workspaces}}
         <div class="column is-one-third">
             <div class="card">
                 <div class="card-content">
