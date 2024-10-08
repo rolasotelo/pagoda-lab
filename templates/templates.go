@@ -32,6 +32,7 @@ const (
 	PageResetPassword  Page = "reset-password"
 	PageSearch         Page = "search"
 	PageTask           Page = "task"
+	PageDashboard      Page = "dashboard"
 )
 
 //go:embed *

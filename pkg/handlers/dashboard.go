@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -10,6 +12,8 @@ import (
 	"github.com/mikestefanello/pagoda/pkg/page"
 	"github.com/mikestefanello/pagoda/pkg/services"
 )
+
+const defaultOrganization = "rolasotelo" // Add this constant at the top of the file
 
 type Dashboard struct {
 	*services.TemplateRenderer
@@ -45,12 +49,14 @@ func (d *Dashboard) Page(ctx echo.Context) error {
 
 	client, err := tfe.NewClient(config)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to create TFE client")
+		log.Printf("Failed to create TFE client: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to create TFE client: %v", err))
 	}
 
-	workspaces, err := listWorkspaces(client)
+	workspaces, err := listWorkspaces(client, defaultOrganization)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Failed to list workspaces")
+		log.Printf("Failed to list workspaces: %v", err)
+		return echo.NewHTTPError(http.StatusInternalServerError, fmt.Sprintf("Failed to list workspaces: %v", err))
 	}
 
 	p.Data = echo.Map{
@@ -60,7 +66,7 @@ func (d *Dashboard) Page(ctx echo.Context) error {
 	return d.RenderPage(ctx, p)
 }
 
-func listWorkspaces(client *tfe.Client) ([]*tfe.Workspace, error) {
+func listWorkspaces(client *tfe.Client, organization string) ([]*tfe.Workspace, error) {
 	options := tfe.WorkspaceListOptions{
 		ListOptions: tfe.ListOptions{
 			PageNumber: 0,
@@ -70,16 +76,19 @@ func listWorkspaces(client *tfe.Client) ([]*tfe.Workspace, error) {
 
 	var allWorkspaces []*tfe.Workspace
 	for {
-		workspaces, err := client.Workspaces.List(context.Background(), "", &options)
+		log.Printf("Fetching workspaces page %d for organization %s", options.PageNumber, organization)
+		workspaces, err := client.Workspaces.List(context.Background(), organization, &options)
 		if err != nil {
-			return nil, err
+			log.Printf("Error fetching workspaces: %v", err)
+			return nil, fmt.Errorf("error fetching workspaces: %w", err)
 		}
 		allWorkspaces = append(allWorkspaces, workspaces.Items...)
-		if workspaces.CurrentPage >= workspaces.TotalPages {
+		if len(workspaces.Items) < options.PageSize {
 			break
 		}
-		options.PageNumber = workspaces.NextPage
+		options.PageNumber++
 	}
 
+	log.Printf("Total workspaces fetched for organization %s: %d", organization, len(allWorkspaces))
 	return allWorkspaces, nil
 }
