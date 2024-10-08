@@ -1,0 +1,20 @@
+{{define "content"}}
+<div class="container">
+    <h1 class="title">Terraform Workspaces Dashboard</h1>
+    <div class="columns is-multiline">
+        {{range .Workspaces}}
+        <div class="column is-one-third">
+            <div class="card">
+                <div class="card-content">
+                    <p class="title is-4">{{.Name}}</p>
+                    <p class="subtitle is-6">ID: {{.ID}}</p>
+                    <p>Created: {{.CreatedAt.Format "2006-01-02 15:04:05"}}</p>
+                    <p>Updated: {{.UpdatedAt.Format "2006-01-02 15:04:05"}}</p>
+                    <p>Resource Count: {{.ResourceCount}}</p>
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}
